@@ -19,8 +19,6 @@ The instructions about setting up the necessary port forwarding rule for this to
 
 ## Requirements in Hardware & Software
 
-* Computer/laptop with LAN port
-* LAN cable
 * Running Skywire manager & node(s)
 * Network connection, connection to the discovery 
 * Running SSH client on the nodes + in the managers web interface

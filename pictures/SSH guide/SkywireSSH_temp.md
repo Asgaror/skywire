@@ -121,7 +121,7 @@ Furthermore you could try to login to the other pi's via SSH, by executing `ssh 
 
 ***
 
-## Enhacement
+## Enhancement
 
 ### Run a Skywire node locally to access the web interface of the remote manager
 

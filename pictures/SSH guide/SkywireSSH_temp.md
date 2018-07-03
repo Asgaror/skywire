@@ -9,8 +9,12 @@
 * [Introduction](#introduction)
 * [Requirements](#requirements)
 * [Usage](#usage)
+* [Enhancement](#enhancement)
 
 ## Introduction
+Follow this guide only if you have a Skyminer at a remote location and want to be able to remotely manage it.
+
+**Do not share the sshs app key generated in this guide!**
 
 After finishing this guide you will be able to remotely connect to your running Skywire nodes per SSH.
 Your nodes need to be up and running and have a working network connection to the [discovery](discovery.skycoin.net:8001). Check if your public keys are listed on their before you start and use the other [guides ](https://github.com/skycoin/skywire/wiki) and our telegram chats to troubleshoot if they are not on there.
@@ -66,6 +70,7 @@ Open the manager web interface and click on `SSH Client`.
 ![SSH_Client](https://raw.githubusercontent.com/Asgaror/skywire/binary_data_storage/pictures/SSH%20guide/SSH_Client.png)
 
 The node key is the previously noted public key and the app key is the sshs key.
+**Don't share the sshs key!**
 Enter them in the popup window and click on `Connect`.
 
 ![SSH_Client_popup](https://raw.githubusercontent.com/Asgaror/skywire/aa3c07d38072233db8c40dd0674b7e48f7764a55/pictures/SSH%20guide/SSH_Client_popup.png)
@@ -75,6 +80,8 @@ A successful connection should look like this:
 ![SS_working](https://raw.githubusercontent.com/Asgaror/skywire/aa3c07d38072233db8c40dd0674b7e48f7764a55/pictures/SSH%20guide/SSH_working.png)
 
 Please note down the port that is being displayed on which the connection was established. In this example the port is `30000`.
+
+You can obtain the node by executing `netstat -tlp` on the pi that established the connection.
 
 ***
 
@@ -111,3 +118,73 @@ Test the connection by requesting your ipv4 address via `curl v4.ifconfig.co`, t
 Furthermore you could try to login to the other pi's via SSH, by executing `ssh root@192.168.0.2`
 
 ![Login_manager](https://raw.githubusercontent.com/Asgaror/skywire/aa3c07d38072233db8c40dd0674b7e48f7764a55/pictures/SSH%20guide/Login_manager.png)
+
+***
+
+## Enhancement
+
+### Run a Skywire node locally to access the web interface of the remote manager
+
+First you need to install Skywire on the device you want to use for this.
+Go to the [forum](https://skywug.net/forum/Forum-Skywire) to find guides for windows, mac or linux.
+
+Use the commands from github to run the [manager](https://github.com/skycoin/skywire#run-skywire-manager) and host a [node](https://github.com/skycoin/skywire#run-skywire-node) 
+
+Establish a connection just like explained [above](https://github.com/skycoin/skywire/wiki/_new#connect-via-skywire-ssh-to-another-node) and note down the port number. It's again ```port 30000``` in this example.
+
+The following is described for using the terminal on linux, it can be done [using putty](https://www.digitalocean.com/community/tutorials/how-to-route-web-traffic-securely-without-a-vpn-using-a-socks-tunnel) as well. 
+
+Open a terminal on your laptop/computer and execute 
+```
+ssh -D 8123 -f -C -q -N root@localhost -p 30000
+```
+*D: Tells SSH that we want a SOCKS tunnel on the specified port number (you can choose a number between 1025-65536);       
+f: Forks the process to the background;         
+C: Compresses the data before sending it;   
+q: Uses quiet mode;    
+N: Tells SSH that no command will be sent once the tunnel is up* 
+
+You will be queried to enter the password of the remote pi you want to connect to. Once that's done you get no output because the process is forked to the background.
+
+*** 
+
+Now we need to use this connection to gain access to the web interface of the remote manager. Install a proxy app of your choice, 
+this guide uses [FoxyProxy](https://getfoxyproxy.org/), it's available for all major browser applications such as firefox, chrome, safari etc. 
+
+Install the plugin and go to 'Options' and click on 'Add'.
+
+![FoxyProxy_empty_remote](https://raw.githubusercontent.com/Asgaror/skywire/binary_data_storage/pictures/SOCKS5%20guide/remote/FoxyProxy_empty_remote.png)
+
+You need to change proxy type to 'SOCKS5', put a description and add the localhost IP + the port you defined above with the `-D` command, in this example we use the port 8123.
+
+Should look like this:
+
+![FoxyProxy_save_remote](https://raw.githubusercontent.com/Asgaror/skywire/binary_data_storage/pictures/SOCKS5%20guide/remote/FoxyProxy_save_remote.png)
+
+Save it, this should bring you to this screen. 
+
+![FoxyProxy_rule_remote](https://raw.githubusercontent.com/Asgaror/skywire/binary_data_storage/pictures/SOCKS5%20guide/remote/FoxyProxy_rules_remote.png)
+
+Click on the previously established proxy and check if the settings are correct.
+
+![FoxyProxy_rules_remote](https://raw.githubusercontent.com/Asgaror/skywire/binary_data_storage/pictures/SOCKS5%20guide/remote/FoxyProxy_rule_remote.png)
+
+If everything looks good enable the proxy using the plugin:
+
+![FoxyProxy_activate_remote](https://raw.githubusercontent.com/Asgaror/skywire/binary_data_storage/pictures/SOCKS5%20guide/remote/FoxyProxy_activate_remote.png)
+
+Now you should be able to view the manager web interface from remote and check if they are connected to the discovery etc. 
+
+![Access_Manager_remote](https://raw.githubusercontent.com/Asgaror/skywire/binary_data_storage/pictures/SOCKS5%20guide/remote/Access_Manager_remote.png)
+
+#### Closing the tunnel 
+
+If you want to close the SSH process that was forked to the background you need to get its PID (process ID). 
+Execute ```ps aux | grep 'ssh -D' | awk '{print $2, $11}'```
+
+It will return two lines, 
+```
+4365 ssh
+6633 grep
+```
+As you can see the PID in this example is `4365`. To close the tunnel you just need to kill the process via `sudo kill 4365`where you have to replace `4365` respectively for your own PID.
